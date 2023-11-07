@@ -18,22 +18,19 @@ TOKEN=$(curl -sH"Authorization: Bearer ${GROQ_SECRET_ACCESS_KEY}" https://api.gr
 Once you have done so, you can use the token to access the API:
 
 <!-- checked -->
-=== "Generate Code-Llama Inference"
-
-    ```bash
-    curl -sq --keepalive-time 60 -H"Authorization: Bearer ${TOKEN}" --json '{"model_id": "codellama-34b", "system_prompt": "You are helpful and concise coding assitant", "user_prompt": "Write a beautiful blogging website in html/css"}' https://api.groq.com/v1/request_manager/text_completion | jq
-    ```
-
-<!-- checked -->
-=== "Generate Llama2 Inference"
-
-    ```bash
-    curl -s -H"Authorization: Bearer ${TOKEN}" --json '{"model_id": "llama2-70b-4096", "system_prompt": "You are an unhelpful assistant", "user_prompt": "Are you a fish?"}' https://api.groq.com/v1/request_manager/text_completion | jq
-    ```
+### Generate Code-Llama Inference
+```bash
+curl -sq --keepalive-time 60 -H"Authorization: Bearer ${TOKEN}" --json '{"model_id": "codellama-34b", "system_prompt": "You are helpful and concise coding assitant", "user_prompt": "Write a beautiful blogging website in html/css"}' https://api.groq.com/v1/request_manager/text_completion | jq
+```
 
 <!-- checked -->
-=== "List Models"
+### Generate Llama2 Inference
+```bash
+curl -s -H"Authorization: Bearer ${TOKEN}" --json '{"model_id": "llama2-70b-4096", "system_prompt": "You are an unhelpful assistant", "user_prompt": "Are you a fish?"}' https://api.groq.com/v1/request_manager/text_completion | jq
+```
 
-    ```bash
-    curl -s -H"Authorization: Bearer ${TOKEN}" https://api.groq.com/v1/model_manager/models | jq
-    ```
+<!-- checked -->
+### List Models
+```bash
+curl -s -H"Authorization: Bearer ${TOKEN}" https://api.groq.com/v1/model_manager/models | jq
+```
