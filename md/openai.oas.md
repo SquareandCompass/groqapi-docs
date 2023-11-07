@@ -1,23 +1,19 @@
+# OpenAI API
 
 This is the official specification for our OpenAI compatible API. For a quick tutorial, see our [OpenAI API `curl` tutorial](tutorials/curl.openai.md)
 
- <style>
-@media only screen and (min-width: 76.25em) {
-  .md-main__inner {
-    max-width: none;
-  }
-  .md-sidebar--primary {
-    left: 0;
-  }
-  .md-sidebar--secondary {
-    right: 0;
-    margin-left: 0;
-    -webkit-transform: none;
-    transform: none;   
-  }
-}
-</style>
+{% swagger src="../.gitbook/assets/liftoff-llm-cloud-api-spec.yml" path="/chat/completions" method="post" %}
+[liftoff-llm-cloud-api-spec.yml](../.gitbook/assets/liftoff-llm-cloud-api-spec.yml)
+{% endswagger %}
 
-<redoc spec-url='../../yml/liftoff-llm-cloud-api-spec.yml'></redoc>
-<script src="https://cdn.jsdelivr.net/npm/redoc@latest/bundles/redoc.standalone.js"> 
-</script>
+{% swagger src="../.gitbook/assets/liftoff-llm-cloud-api-spec.yml" path="/completions" method="post" %}
+[liftoff-llm-cloud-api-spec.yml](../.gitbook/assets/liftoff-llm-cloud-api-spec.yml)
+{% endswagger %}
+
+{% swagger src="../.gitbook/assets/liftoff-llm-cloud-api-spec.yml" path="/models" method="get" %}
+[liftoff-llm-cloud-api-spec.yml](../.gitbook/assets/liftoff-llm-cloud-api-spec.yml)
+{% endswagger %}
+
+{% swagger src="../.gitbook/assets/liftoff-llm-cloud-api-spec.yml" path="/models/{model}" method="get" %}
+[liftoff-llm-cloud-api-spec.yml](../.gitbook/assets/liftoff-llm-cloud-api-spec.yml)
+{% endswagger %}

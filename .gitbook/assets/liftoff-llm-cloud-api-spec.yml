@@ -1,0 +1,1346 @@
+openapi: 3.0.0
+info:
+  title: Groq OpenAI API
+  description: The Groq OpenAI REST API. 
+  version: "0.0.1"
+servers:
+  - url: https://api.groq.com/openai/v1
+paths:
+  /chat/completions:
+    post:
+      operationId: createChatCompletion
+      tags:
+        - Groq
+      summary: Creates a model response for the given chat conversation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChatCompletionRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateChatCompletionResponse"
+
+      x-oaiMeta:
+        name: Create chat completion
+        group: chat
+        returns: |
+          Returns a [chat completion](/docs/api-reference/chat/object) object, or a streamed sequence of [chat completion chunk](/docs/api-reference/chat/streaming) objects if the request is streamed.
+        path: create
+        examples:
+          - title: No Streaming
+            request:
+              curl: |
+                curl https://api.groq.com/v1/chat/completions \
+                  -H "Content-Type: application/json" \
+                  -H "Authorization: Bearer $GROQ_API_KEY" \
+                  -d '{
+                    "model": "VAR_model_id",
+                    "messages": [
+                      {
+                        "role": "system",
+                        "content": "You are a helpful assistant."
+                      },
+                      {
+                        "role": "user",
+                        "content": "Hello!"
+                      }
+                    ]
+                  }'
+              python: |
+                import os
+                import groq
+                groq.api_key = os.getenv("GROQ_API_KEY")
+
+                completion = groq.ChatCompletion.create(
+                  model="VAR_model_id",
+                  messages=[
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "user", "content": "Hello!"}
+                  ]
+                )
+
+                print(completion.choices[0].message)
+              node.js: |-
+                import Groq from "groq";
+
+                const groq = new Groq();
+
+                async function main() {
+                  const completion = await groq.chat.completions.create({
+                    messages: [{ role: "system", content: "You are a helpful assistant." }],
+                    model: "VAR_model_id",
+                  });
+
+                  console.log(completion.choices[0]);
+                }
+
+                main();
+            response: &chat_completion_example |
+              {
+                "id": "chatcmpl-123",
+                "object": "chat.completion",
+                "created": 1677652288,
+                "model": "gpt-3.5-turbo-0613",
+                "choices": [{
+                  "index": 0,
+                  "message": {
+                    "role": "assistant",
+                    "content": "\n\nHello there, how may I assist you today?",
+                  },
+                  "finish_reason": "stop"
+                }],
+                "usage": {
+                  "prompt_tokens": 9,
+                  "completion_tokens": 12,
+                  "total_tokens": 21
+                }
+              }
+          - title: Streaming
+            request:
+              curl: |
+                curl https://api.groq.com/v1/chat/completions \
+                  -H "Content-Type: application/json" \
+                  -H "Authorization: Bearer $GROQ_API_KEY" \
+                  -d '{
+                    "model": "VAR_model_id",
+                    "messages": [
+                      {
+                        "role": "system",
+                        "content": "You are a helpful assistant."
+                      },
+                      {
+                        "role": "user",
+                        "content": "Hello!"
+                      }
+                    ],
+                    "stream": true
+                  }'
+              python: |
+                import os
+                import groq
+                groq.api_key = os.getenv("GROQ_API_KEY")
+
+                completion = groq.ChatCompletion.create(
+                  model="VAR_model_id",
+                  messages=[
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "user", "content": "Hello!"}
+                  ],
+                  stream=True
+                )
+
+                for chunk in completion:
+                  print(chunk.choices[0].delta)
+
+              node.js: |-
+                import Groq from "groq";
+
+                const groq = new Groq();
+
+                async function main() {
+                  const completion = await groq.chat.completions.create({
+                    model: "VAR_model_id",
+                    messages: [
+                      {"role": "system", "content": "You are a helpful assistant."},
+                      {"role": "user", "content": "Hello!"}
+                    ],
+                    stream: true,
+                  });
+
+                  for await (const chunk of completion) {
+                    console.log(chunk.choices[0].delta.content);
+                  }
+                }
+
+                main();
+            response: &chat_completion_chunk_example |
+              {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1694268190,"model":"gpt-3.5-turbo-0613","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null}]}
+
+              {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1694268190,"model":"gpt-3.5-turbo-0613","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}]}
+
+              {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1694268190,"model":"gpt-3.5-turbo-0613","choices":[{"index":0,"delta":{"content":"!"},"finish_reason":null}]}
+
+              ....
+
+              {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1694268190,"model":"gpt-3.5-turbo-0613","choices":[{"index":0,"delta":{"content":" today"},"finish_reason":null}]}
+
+              {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1694268190,"model":"gpt-3.5-turbo-0613","choices":[{"index":0,"delta":{"content":"?"},"finish_reason":null}]}
+
+              {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1694268190,"model":"gpt-3.5-turbo-0613","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+          - title: Function calling
+            request:
+              curl: |
+                curl https://api.groq.com/v1/chat/completions \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $GROQ_API_KEY" \
+                -d '{
+                  "model": "gpt-3.5-turbo",
+                  "messages": [
+                    {
+                      "role": "user",
+                      "content": "What is the weather like in Boston?"
+                    }
+                  ],
+                  "functions": [
+                    {
+                      "name": "get_current_weather",
+                      "description": "Get the current weather in a given location",
+                      "parameters": {
+                        "type": "object",
+                        "properties": {
+                          "location": {
+                            "type": "string",
+                            "description": "The city and state, e.g. San Francisco, CA"
+                          },
+                          "unit": {
+                            "type": "string",
+                            "enum": ["celsius", "fahrenheit"]
+                          }
+                        },
+                        "required": ["location"]
+                      }
+                    }
+                  ],
+                  "function_call": "auto"
+                }'
+              python: |
+                import os
+                import groq
+                groq.api_key = os.getenv("GROQ_API_KEY")
+
+                functions = [ 
+                  {
+                    "name": "get_current_weather",
+                    "description": "Get the current weather in a given location",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "location": {
+                                "type": "string",
+                                "description": "The city and state, e.g. San Francisco, CA",
+                            },
+                            "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]},
+                        },
+                        "required": ["location"],
+                    },
+                  }
+                ]
+                messages = [{"role": "user", "content": "What's the weather like in Boston today?"}]
+                completion = groq.ChatCompletion.create(
+                  model="VAR_model_id",
+                  messages=messages,
+                  functions=functions,
+                  function_call="auto",  # auto is default, but we'll be explicit
+                )
+
+                print(completion)
+
+              node.js: |-
+                import Groq from "groq";
+
+                const groq = new Groq();
+
+                async function main() {
+                  const messages = [{"role": "user", "content": "What's the weather like in Boston today?"}];
+                  const functions = [
+                      {
+                          "name": "get_current_weather",
+                          "description": "Get the current weather in a given location",
+                          "parameters": {
+                              "type": "object",
+                              "properties": {
+                                  "location": {
+                                      "type": "string",
+                                      "description": "The city and state, e.g. San Francisco, CA",
+                                  },
+                                  "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]},
+                              },
+                              "required": ["location"],
+                          },
+                      }
+                  ];
+
+                  const response = await groq.chat.completions.create({
+                      model: "gpt-3.5-turbo",
+                      messages: messages,
+                      functions: functions,
+                      function_call: "auto",  // auto is default, but we'll be explicit
+                  });
+
+                  console.log(response);
+                }
+
+                main();
+            response: &chat_completion_function_example |
+              {
+                "choices": [
+                  {
+                    "finish_reason": "function_call",
+                    "index": 0,
+                    "message": {
+                      "content": null,
+                      "function_call": {
+                        "arguments": "{\n  \"location\": \"Boston, MA\"\n}",
+                        "name": "get_current_weather"
+                      },
+                      "role": "assistant"
+                    }
+                  }
+                ],
+                "created": 1694028367,
+                "model": "gpt-3.5-turbo-0613",
+                "object": "chat.completion",
+                "usage": {
+                  "completion_tokens": 18,
+                  "prompt_tokens": 82,
+                  "total_tokens": 100
+                }
+              }
+  /completions:
+    post:
+      operationId: createCompletion
+      tags:
+        - Groq
+      summary: Creates a completion for the provided prompt and parameters.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCompletionRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateCompletionResponse"
+      x-oaiMeta:
+        name: Create completion
+        returns: |
+          Returns a [completion](/docs/api-reference/completions/object) object, or a sequence of completion objects if the request is streamed.
+        legacy: true
+        examples:
+          - title: No streaming
+            request:
+              curl: |
+                curl https://api.groq.com/v1/completions \
+                  -H "Content-Type: application/json" \
+                  -H "Authorization: Bearer $GROQ_API_KEY" \
+                  -d '{
+                    "model": "VAR_model_id",
+                    "prompt": "Say this is a test",
+                    "max_tokens": 7,
+                    "temperature": 0
+                  }'
+              python: |
+                import os
+                import groq
+                groq.api_key = os.getenv("GROQ_API_KEY")
+                groq.Completion.create(
+                  model="VAR_model_id",
+                  prompt="Say this is a test",
+                  max_tokens=7,
+                  temperature=0
+                )
+              node.js: |-
+                import Groq from "groq";
+
+                const groq = new Groq();
+
+                async function main() {
+                  const completion = await groq.completions.create({
+                    model: "VAR_model_id",
+                    prompt: "Say this is a test.",
+                    max_tokens: 7,
+                    temperature: 0,
+                  });
+
+                  console.log(completion);
+                }
+                main();
+            response: |
+              {
+                "id": "cmpl-uqkvlQyYK7bGYrRHQ0eXlWi7",
+                "object": "text_completion",
+                "created": 1589478378,
+                "model": "VAR_model_id",
+                "choices": [
+                  {
+                    "text": "\n\nThis is indeed a test",
+                    "index": 0,
+                    "logprobs": null,
+                    "finish_reason": "length"
+                  }
+                ],
+                "usage": {
+                  "prompt_tokens": 5,
+                  "completion_tokens": 7,
+                  "total_tokens": 12
+                }
+              }
+          - title: Streaming
+            request:
+              curl: |
+                curl https://api.groq.com/v1/completions \
+                  -H "Content-Type: application/json" \
+                  -H "Authorization: Bearer $GROQ_API_KEY" \
+                  -d '{
+                    "model": "VAR_model_id",
+                    "prompt": "Say this is a test",
+                    "max_tokens": 7,
+                    "temperature": 0,
+                    "stream": true
+                  }'
+              python: |
+                import os
+                import groq
+                groq.api_key = os.getenv("GROQ_API_KEY")
+                for chunk in groq.Completion.create(
+                  model="VAR_model_id",
+                  prompt="Say this is a test",
+                  max_tokens=7,
+                  temperature=0,
+                  stream=True
+                ):
+                  print(chunk['choices'][0]['text'])
+              node.js: |-
+                import Groq from "groq";
+
+                const groq = new Groq();
+
+                async function main() {
+                  const stream = await groq.completions.create({
+                    model: "VAR_model_id",
+                    prompt: "Say this is a test.",
+                    stream: true,
+                  });
+
+                  for await (const chunk of stream) {
+                    console.log(chunk.choices[0].text)
+                  }
+                }
+                main();
+            response: |
+              {
+                "id": "cmpl-7iA7iJjj8V2zOkCGvWF2hAkDWBQZe",
+                "object": "text_completion",
+                "created": 1690759702,
+                "choices": [
+                  {
+                    "text": "This",
+                    "index": 0,
+                    "logprobs": null,
+                    "finish_reason": null
+                  }
+                ],
+                "model": "gpt-3.5-turbo-instruct"
+              }
+
+  /models:
+    get:
+      operationId: listModels
+      tags:
+        - Groq
+      summary: Lists the currently available models, and provides basic information about each one such as the owner and availability.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListModelsResponse"
+      x-oaiMeta:
+        name: List models
+        returns: A list of [model](/docs/api-reference/models/object) objects.
+        examples:
+          request:
+            curl: |
+              curl https://api.groq.com/v1/models \
+                -H "Authorization: Bearer $GROQ_API_KEY"
+            python: |
+              import os
+              import groq
+              groq.api_key = os.getenv("GROQ_API_KEY")
+              groq.Model.list()
+            node.js: |-
+              import Groq from "groq";
+
+              const groq = new Groq();
+
+              async function main() {
+                const list = await groq.models.list();
+
+                for await (const model of list) {
+                  console.log(model);
+                }
+              }
+              main();
+          response: |
+            {
+              "object": "list",
+              "data": [
+                {
+                  "id": "model-id-0",
+                  "object": "model",
+                  "created": 1686935002,
+                  "owned_by": "organization-owner"
+                },
+                {
+                  "id": "model-id-1",
+                  "object": "model",
+                  "created": 1686935002,
+                  "owned_by": "organization-owner",
+                },
+                {
+                  "id": "model-id-2",
+                  "object": "model",
+                  "created": 1686935002,
+                  "owned_by": "groq"
+                },
+              ],
+              "object": "list"
+            }
+
+  /models/{model}:
+    get:
+      operationId: retrieveModel
+      tags:
+        - Groq
+      summary: Retrieves a model instance, providing basic information about the model such as the owner and permissioning.
+      parameters:
+        - in: path
+          name: model
+          required: true
+          schema:
+            type: string
+            # ideally this will be an actual ID, so this will always work from browser
+            example: gpt-3.5-turbo
+          description: The ID of the model to use for this request
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Model"
+      x-oaiMeta:
+        name: Retrieve model
+        returns: The [model](/docs/api-reference/models/object) object matching the specified ID.
+        examples:
+          request:
+            curl: |
+              curl https://api.groq.com/v1/models/VAR_model_id \
+                -H "Authorization: Bearer $GROQ_API_KEY"
+            python: |
+              import os
+              import groq
+              groq.api_key = os.getenv("GROQ_API_KEY")
+              groq.Model.retrieve("VAR_model_id")
+            node.js: |-
+              import Groq from "groq";
+
+              const groq = new Groq();
+
+              async function main() {
+                const model = await groq.models.retrieve("gpt-3.5-turbo");
+
+                console.log(model);
+              }
+
+              main();
+          response: &retrieve_model_response |
+            {
+              "id": "VAR_model_id",
+              "object": "model",
+              "created": 1686935002,
+              "owned_by": "groq"
+            }
+components:
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: 'bearer'
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        type:
+          type: string
+          nullable: false
+        message:
+          type: string
+          nullable: false
+        param:
+          type: string
+          nullable: true
+        code:
+          type: string
+          nullable: true
+      required:
+        - type
+        - message
+        - param
+        - code
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          $ref: "#/components/schemas/Error"
+      required:
+        - error
+
+    ListModelsResponse:
+      type: object
+      properties:
+        object:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Model"
+      required:
+        - object
+        - data
+
+    DeleteModelResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        object:
+          type: string
+        deleted:
+          type: boolean
+      required:
+        - id
+        - object
+        - deleted
+
+    CreateCompletionRequest:
+      type: object
+      properties:
+        model:
+          description: &model_description |
+            ID of the model to use. You can use the [List models](/docs/api-reference/models/list) API to see all of your available models, or see our [Model overview](/docs/models/overview) for descriptions of them.
+          anyOf:
+            - type: string
+            - type: string
+              enum:
+                [
+                  "babbage-002",
+                  "davinci-002",
+                  "gpt-3.5-turbo-instruct",
+                  "text-davinci-003",
+                  "text-davinci-002",
+                  "text-davinci-001",
+                  "code-davinci-002",
+                  "text-curie-001",
+                  "text-babbage-001",
+                  "text-ada-001",
+                ]
+          x-oaiTypeLabel: string
+        prompt:
+          description: &completions_prompt_description |
+            The prompt(s) to generate completions for, encoded as a string, array of strings, array of tokens, or array of token arrays.
+
+            Note that <|endoftext|> is the document separator that the model sees during training, so if a prompt is not specified the model will generate as if from the beginning of a new document.
+          default: "<|endoftext|>"
+          nullable: true
+          oneOf:
+            - type: string
+              default: ""
+              example: "This is a test."
+            - type: array
+              items:
+                type: string
+                default: ""
+                example: "This is a test."
+            - type: array
+              minItems: 1
+              items:
+                type: integer
+              example: "[1212, 318, 257, 1332, 13]"
+            - type: array
+              minItems: 1
+              items:
+                type: array
+                minItems: 1
+                items:
+                  type: integer
+              example: "[[1212, 318, 257, 1332, 13]]"
+        suffix:
+          description: The suffix that comes after a completion of inserted text.
+          default: null
+          nullable: true
+          type: string
+          example: "test."
+        max_tokens:
+          type: integer
+          minimum: 0
+          default: 16
+          example: 16
+          nullable: true
+          description: &completions_max_tokens_description |
+            The maximum number of [tokens](/tokenizer) to generate in the completion.
+
+            The token count of your prompt plus `max_tokens` cannot exceed the model's context length. [Example Python code](https://cookbook.groq.com/examples/how_to_count_tokens_with_tiktoken) for counting tokens.
+        temperature:
+          type: number
+          minimum: 0
+          maximum: 2
+          default: 1
+          example: 1
+          nullable: true
+          description: &completions_temperature_description |
+            What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.
+
+            We generally recommend altering this or `top_p` but not both.
+        top_p:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 1
+          example: 1
+          nullable: true
+          description: &completions_top_p_description |
+            An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.
+
+            We generally recommend altering this or `temperature` but not both.
+        n:
+          type: integer
+          minimum: 1
+          maximum: 128
+          default: 1
+          example: 1
+          nullable: true
+          description: &completions_completions_description |
+            How many completions to generate for each prompt.
+
+            **Note:** Because this parameter generates many completions, it can quickly consume your token quota. Use carefully and ensure that you have reasonable settings for `max_tokens` and `stop`.
+        stream:
+          description: >
+            Whether to stream back partial progress. If set, tokens will be sent as data-only [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#Event_stream_format)
+            as they become available, with the stream terminated by a `data: [DONE]` message. [Example Python code](https://cookbook.groq.com/examples/how_to_stream_completions).
+          type: boolean
+          nullable: true
+          default: false
+        logprobs: &completions_logprobs_configuration
+          type: integer
+          minimum: 0
+          maximum: 5
+          default: null
+          nullable: true
+          description: &completions_logprobs_description |
+            Include the log probabilities on the `logprobs` most likely tokens, as well the chosen tokens. For example, if `logprobs` is 5, the API will return a list of the 5 most likely tokens. The API will always return the `logprob` of the sampled token, so there may be up to `logprobs+1` elements in the response.
+
+            The maximum value for `logprobs` is 5.
+        echo:
+          type: boolean
+          default: false
+          nullable: true
+          description: &completions_echo_description >
+            Echo back the prompt in addition to the completion
+        stop:
+          description: &completions_stop_description >
+            Up to 4 sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence.
+          default: null
+          nullable: true
+          oneOf:
+            - type: string
+              default: <|endoftext|>
+              example: "\n"
+              nullable: true
+            - type: array
+              minItems: 1
+              maxItems: 4
+              items:
+                type: string
+                example: '["\n"]'
+        presence_penalty:
+          type: number
+          default: 0
+          minimum: -2
+          maximum: 2
+          nullable: true
+          description: &completions_presence_penalty_description |
+            Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.
+
+            [See more information about frequency and presence penalties.](/docs/guides/gpt/parameter-details)
+        frequency_penalty:
+          type: number
+          default: 0
+          minimum: -2
+          maximum: 2
+          nullable: true
+          description: &completions_frequency_penalty_description |
+            Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.
+
+            [See more information about frequency and presence penalties.](/docs/guides/gpt/parameter-details)
+        best_of:
+          type: integer
+          default: 1
+          minimum: 0
+          maximum: 20
+          nullable: true
+          description: &completions_best_of_description |
+            Generates `best_of` completions server-side and returns the "best" (the one with the highest log probability per token). Results cannot be streamed.
+
+            When used with `n`, `best_of` controls the number of candidate completions and `n` specifies how many to return – `best_of` must be greater than `n`.
+
+            **Note:** Because this parameter generates many completions, it can quickly consume your token quota. Use carefully and ensure that you have reasonable settings for `max_tokens` and `stop`.
+        logit_bias: &completions_logit_bias
+          type: object
+          x-oaiTypeLabel: map
+          default: null
+          nullable: true
+          additionalProperties:
+            type: integer
+          description: &completions_logit_bias_description |
+            Modify the likelihood of specified tokens appearing in the completion.
+
+            Accepts a json object that maps tokens (specified by their token ID in the GPT tokenizer) to an associated bias value from -100 to 100. You can use this [tokenizer tool](/tokenizer?view=bpe) (which works for both GPT-2 and GPT-3) to convert text to token IDs. Mathematically, the bias is added to the logits generated by the model prior to sampling. The exact effect will vary per model, but values between -1 and 1 should decrease or increase likelihood of selection; values like -100 or 100 should result in a ban or exclusive selection of the relevant token.
+
+            As an example, you can pass `{"50256": -100}` to prevent the <|endoftext|> token from being generated.
+        user: &end_user_param_configuration
+          type: string
+          example: user-1234
+          description: |
+            A unique identifier representing your end-user, which can help Groq to monitor and detect abuse. [Learn more](/docs/guides/safety-best-practices/end-user-ids).
+      required:
+        - model
+        - prompt
+
+    CreateCompletionResponse:
+      type: object
+      description: |
+        Represents a completion response from the API. Note: both the streamed and non-streamed response objects share the same shape (unlike the chat endpoint).
+      properties:
+        id:
+          type: string
+          description: A unique identifier for the completion.
+        object:
+          type: string
+          description: The object type, which is always "text_completion"
+        created:
+          type: integer
+          description: The Unix timestamp (in seconds) of when the completion was created.
+        model:
+          type: string
+          description: The model used for completion.
+        choices:
+          type: array
+          description: The list of completion choices the model generated for the input prompt.
+          items:
+            type: object
+            required:
+              - text
+              - index
+              - logprobs
+              - finish_reason
+            properties:
+              text:
+                type: string
+              index:
+                type: integer
+              logprobs:
+                type: object
+                nullable: true
+                properties:
+                  tokens:
+                    type: array
+                    items:
+                      type: string
+                  token_logprobs:
+                    type: array
+                    items:
+                      type: number
+                  top_logprobs:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties:
+                        type: integer
+                  text_offset:
+                    type: array
+                    items:
+                      type: integer
+              finish_reason:
+                type: string
+                description: &completion_finish_reason_description |
+                  The reason the model stopped generating tokens. This will be `stop` if the model hit a natural stop point or a provided stop sequence,
+                  `length` if the maximum number of tokens specified in the request was reached,
+                  or `content_filter` if content was omitted due to a flag from our content filters.
+                enum: ["stop", "length", "content_filter"]
+        usage:
+          $ref: "#/components/schemas/CompletionUsage"
+      required:
+        - id
+        - object
+        - created
+        - model
+        - choices
+      x-oaiMeta:
+        name: The completion object
+        legacy: true
+        example: |
+          {
+            "id": "cmpl-uqkvlQyYK7bGYrRHQ0eXlWi7",
+            "object": "text_completion",
+            "created": 1589478378,
+            "model": "gpt-3.5-turbo",
+            "choices": [
+              {
+                "text": "\n\nThis is indeed a test",
+                "index": 0,
+                "logprobs": null,
+                "finish_reason": "length"
+              }
+            ],
+            "usage": {
+              "prompt_tokens": 5,
+              "completion_tokens": 7,
+              "total_tokens": 12
+            }
+          }
+
+    ChatCompletionRequestMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: ["system", "user", "assistant", "function"]
+          description: The role of the messages author. One of `system`, `user`, `assistant`, or `function`.
+        content:
+          type: string
+          nullable: true
+          description: The contents of the message. `content` is required for all messages, and may be null for assistant messages with function calls.
+        name:
+          type: string
+          description: The name of the author of this message. `name` is required if role is `function`, and it should be the name of the function whose response is in the `content`. May contain a-z, A-Z, 0-9, and underscores, with a maximum length of 64 characters.
+        function_call:
+          type: object
+          description: The name and arguments of a function that should be called, as generated by the model.
+          properties:
+            name:
+              type: string
+              description: The name of the function to call.
+            arguments:
+              type: string
+              description: The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function.
+          required:
+            - name
+            - arguments
+      required:
+        - role
+        - content
+
+    ChatCompletionFunctionParameters:
+      type: object
+      description: "The parameters the functions accepts, described as a JSON Schema object. See the [guide](/docs/guides/gpt/function-calling) for examples, and the [JSON Schema reference](https://json-schema.org/understanding-json-schema/) for documentation about the format.\n\nTo describe a function that accepts no parameters, provide the value `{\"type\": \"object\", \"properties\": {}}`."
+      additionalProperties: true
+
+    ChatCompletionFunctions:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the function to be called. Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
+        description:
+          type: string
+          description: A description of what the function does, used by the model to choose when and how to call the function.
+        parameters:
+          $ref: "#/components/schemas/ChatCompletionFunctionParameters"
+      required:
+        - name
+        - parameters
+
+    ChatCompletionFunctionCallOption:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the function to call.
+      required:
+        - name
+
+    ChatCompletionResponseMessage:
+      type: object
+      description: A chat completion message generated by the model.
+      properties:
+        role:
+          type: string
+          enum: ["system", "user", "assistant", "function"]
+          description: The role of the author of this message.
+        content:
+          type: string
+          description: The contents of the message.
+          nullable: true
+        function_call:
+          type: object
+          description: The name and arguments of a function that should be called, as generated by the model.
+          properties:
+            name:
+              type: string
+              description: The name of the function to call.
+            arguments:
+              type: string
+              description: The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function.
+          required:
+            - name
+            - arguments
+      required:
+        - role
+        - content
+
+    ChatCompletionStreamResponseDelta:
+      type: object
+      description: A chat completion delta generated by streamed model responses.
+      properties:
+        role:
+          type: string
+          enum: ["system", "user", "assistant", "function"]
+          description: The role of the author of this message.
+        content:
+          type: string
+          description: The contents of the chunk message.
+          nullable: true
+        function_call:
+          type: object
+          description: The name and arguments of a function that should be called, as generated by the model.
+          properties:
+            name:
+              type: string
+              description: The name of the function to call.
+            arguments:
+              type: string
+              description: The arguments to call the function with, as generated by the model in JSON format. Note that the model does not always generate valid JSON, and may hallucinate parameters not defined by your function schema. Validate the arguments in your code before calling your function.
+
+    CreateChatCompletionRequest:
+      type: object
+      properties:
+        model:
+          description: ID of the model to use. See the [model endpoint compatibility](/docs/models/model-endpoint-compatibility) table for details on which models work with the Chat API.
+          example: "gpt-3.5-turbo"
+          anyOf:
+            - type: string
+            - type: string
+              enum:
+                [
+                  "gpt-4",
+                  "gpt-4-0314",
+                  "gpt-4-0613",
+                  "gpt-4-32k",
+                  "gpt-4-32k-0314",
+                  "gpt-4-32k-0613",
+                  "gpt-3.5-turbo",
+                  "gpt-3.5-turbo-16k",
+                  "gpt-3.5-turbo-0301",
+                  "gpt-3.5-turbo-0613",
+                  "gpt-3.5-turbo-16k-0613",
+                ]
+          x-oaiTypeLabel: string
+        messages:
+          description: A list of messages comprising the conversation so far. [Example Python code](https://cookbook.groq.com/examples/how_to_format_inputs_to_chatgpt_models).
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/ChatCompletionRequestMessage"
+        functions:
+          description: A list of functions the model may generate JSON inputs for.
+          type: array
+          minItems: 1
+          maxItems: 128
+          items:
+            $ref: "#/components/schemas/ChatCompletionFunctions"
+        function_call:
+          description: > 
+            Controls how the model calls functions. "none" means the model will not call a function and instead generates a message. "auto" means the model can pick between generating a message or calling a function.  Specifying a particular function via `{"name": "my_function"}` forces the model to call that function. "none" is the default when no functions are present. "auto" is the default if functions are present.
+          oneOf:
+            - type: string
+              enum: [none, auto]
+            - $ref: "#/components/schemas/ChatCompletionFunctionCallOption"
+        temperature:
+          type: number
+          minimum: 0
+          maximum: 2
+          default: 1
+          example: 1
+          nullable: true
+          description: *completions_temperature_description
+        top_p:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 1
+          example: 1
+          nullable: true
+          description: *completions_top_p_description
+        n:
+          type: integer
+          minimum: 1
+          maximum: 128
+          default: 1
+          example: 1
+          nullable: true
+          description: How many chat completion choices to generate for each input message.
+        stream:
+          description: >
+            If set, partial message deltas will be sent, like in ChatGPT. Tokens will be sent as data-only [server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#Event_stream_format)
+            as they become available, with the stream terminated by a `data: [DONE]` message. [Example Python code](https://cookbook.groq.com/examples/how_to_stream_completions).
+          type: boolean
+          nullable: true
+          default: false
+        stop:
+          description: |
+            Up to 4 sequences where the API will stop generating further tokens.
+          default: null
+          oneOf:
+            - type: string
+              nullable: true
+            - type: array
+              minItems: 1
+              maxItems: 4
+              items:
+                type: string
+        max_tokens:
+          description: |
+            The maximum number of [tokens](/tokenizer) to generate in the chat completion.
+
+            The total length of input tokens and generated tokens is limited by the model's context length. [Example Python code](https://cookbook.groq.com/examples/how_to_count_tokens_with_tiktoken) for counting tokens.
+          default: inf
+          type: integer
+          nullable: true
+        presence_penalty:
+          type: number
+          default: 0
+          minimum: -2
+          maximum: 2
+          nullable: true
+          description: *completions_presence_penalty_description
+        frequency_penalty:
+          type: number
+          default: 0
+          minimum: -2
+          maximum: 2
+          nullable: true
+          description: *completions_frequency_penalty_description
+        logit_bias:
+          type: object
+          x-oaiTypeLabel: map
+          default: null
+          nullable: true
+          additionalProperties:
+            type: integer
+          description: |
+            Modify the likelihood of specified tokens appearing in the completion.
+
+            Accepts a json object that maps tokens (specified by their token ID in the tokenizer) to an associated bias value from -100 to 100. Mathematically, the bias is added to the logits generated by the model prior to sampling. The exact effect will vary per model, but values between -1 and 1 should decrease or increase likelihood of selection; values like -100 or 100 should result in a ban or exclusive selection of the relevant token.
+        user: *end_user_param_configuration
+      required:
+        - model
+        - messages
+
+    CreateChatCompletionResponse:
+      type: object
+      description: Represents a chat completion response returned by model, based on the provided input.
+      properties:
+        id:
+          type: string
+          description: A unique identifier for the chat completion.
+        object:
+          type: string
+          description: The object type, which is always `chat.completion`.
+        created:
+          type: integer
+          description: The Unix timestamp (in seconds) of when the chat completion was created.
+        model:
+          type: string
+          description: The model used for the chat completion.
+        choices:
+          type: array
+          description: A list of chat completion choices. Can be more than one if `n` is greater than 1.
+          items:
+            type: object
+            required:
+              - index
+              - message
+              - finish_reason
+            properties:
+              index:
+                type: integer
+                description: The index of the choice in the list of choices.
+              message:
+                $ref: "#/components/schemas/ChatCompletionResponseMessage"
+              finish_reason:
+                type: string
+                description: &chat_completion_finish_reason_description |
+                  The reason the model stopped generating tokens. This will be `stop` if the model hit a natural stop point or a provided stop sequence,
+                  `length` if the maximum number of tokens specified in the request was reached,
+                  `content_filter` if content was omitted due to a flag from our content filters,
+                  or `function_call` if the model called a function.
+                enum: ["stop", "length", "function_call", "content_filter"]
+        usage:
+          $ref: "#/components/schemas/CompletionUsage"
+      required:
+        - id
+        - object
+        - created
+        - model
+        - choices
+      x-oaiMeta:
+        name: The chat completion object
+        group: chat
+        example: *chat_completion_example
+
+    CreateChatCompletionFunctionResponse:
+      type: object
+      description: Represents a chat completion response returned by model, based on the provided input.
+      properties:
+        id:
+          type: string
+          description: A unique identifier for the chat completion.
+        object:
+          type: string
+          description: The object type, which is always `chat.completion`.
+        created:
+          type: integer
+          description: The Unix timestamp (in seconds) of when the chat completion was created.
+        model:
+          type: string
+          description: The model used for the chat completion.
+        choices:
+          type: array
+          description: A list of chat completion choices. Can be more than one if `n` is greater than 1.
+          items:
+            type: object
+            required:
+              - index
+              - message
+              - finish_reason
+            properties:
+              index:
+                type: integer
+                description: The index of the choice in the list of choices.
+              message:
+                $ref: "#/components/schemas/ChatCompletionResponseMessage"
+              finish_reason:
+                type: string
+                description: &chat_completion_function_finish_reason_description |
+                  The reason the model stopped generating tokens. This will be `stop` if the model hit a natural stop point or a provided stop sequence,
+                  `length` if the maximum number of tokens specified in the request was reached, or `function_call` if the model called a function.
+                enum: ["stop", "length", "function_call"]
+        usage:
+          $ref: "#/components/schemas/CompletionUsage"
+      required:
+        - id
+        - object
+        - created
+        - model
+        - choices
+      x-oaiMeta:
+        name: The chat completion object
+        group: chat
+        example: *chat_completion_function_example
+
+    CreateChatCompletionStreamResponse:
+      type: object
+      description: Represents a streamed chunk of a chat completion response returned by model, based on the provided input.
+      properties:
+        id:
+          type: string
+          description: A unique identifier for the chat completion. Each chunk has the same ID.
+        object:
+          type: string
+          description: The object type, which is always `chat.completion.chunk`.
+        created:
+          type: integer
+          description: The Unix timestamp (in seconds) of when the chat completion was created. Each chunk has the same timestamp.
+        model:
+          type: string
+          description: The model to generate the completion.
+        choices:
+          type: array
+          description: A list of chat completion choices. Can be more than one if `n` is greater than 1.
+          items:
+            type: object
+            required:
+              - index
+              - delta
+              - finish_reason
+            properties:
+              index:
+                type: integer
+                description: The index of the choice in the list of choices.
+              delta:
+                $ref: "#/components/schemas/ChatCompletionStreamResponseDelta"
+              finish_reason:
+                type: string
+                description: *chat_completion_finish_reason_description
+                enum: ["stop", "length", "function_call"]
+                nullable: true
+      required:
+        - id
+        - object
+        - created
+        - model
+        - choices
+      x-oaiMeta:
+        name: The chat completion chunk object
+        group: chat
+        example: *chat_completion_chunk_example
+
+    Model:
+      title: Model
+      description: Describes an Groq model offering that can be used with the API.
+      properties:
+        id:
+          type: string
+          description: The model identifier, which can be referenced in the API endpoints.
+        object:
+          type: string
+          description: The object type, which is always "model".
+        created:
+          type: integer
+          description: The Unix timestamp (in seconds) when the model was created.
+        owned_by:
+          type: string
+          description: The organization that owns the model.
+      required:
+        - id
+        - object
+        - created
+        - owned_by
+      x-oaiMeta:
+        name: The model object
+        example: *retrieve_model_response
+
+    CompletionUsage:
+      type: object
+      description: Usage statistics for the completion request.
+      properties:
+        prompt_tokens:
+          type: integer
+          description: Number of tokens in the prompt.
+        completion_tokens:
+          type: integer
+          description: Number of tokens in the generated completion.
+        total_tokens:
+          type: integer
+          description: Total number of tokens used in the request (prompt + completion).
+      required:
+        - prompt_tokens
+        - completion_tokens
+        - total_tokens
+
+security:
+  - ApiKeyAuth: []
