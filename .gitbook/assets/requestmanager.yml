@@ -1,0 +1,160 @@
+openapi: 3.0.1
+info:
+  # title: Groq API
+  version: v0.0.1
+  # x-logo:
+  #   url: https://groq.com/wp-content/uploads/2021/04/groq_logo.svg
+servers:
+- url: https://api.groq.com
+tags:
+- name: RequestManagerService
+paths:
+  /v1/request_manager/text_completion:
+    post:
+      tags:
+      - RequestManagerService
+      summary: completes text based on query and get back a stream of tokens
+      operationId: RequestManagerService_GetTextCompletionStream
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/v1GetTextCompletionStreamRequest'
+        required: true
+      responses:
+        200:
+          description: A successful response.(streaming responses)
+          content:
+            application/json:
+              schema:
+                title: Stream result of v1GetTextCompletionStreamResponse
+                type: object
+                properties:
+                  result:
+                    $ref: '#/components/schemas/v1GetTextCompletionStreamResponse'
+                  error:
+                    $ref: '#/components/schemas/rpcStatus'
+        default:
+          description: An unexpected error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/rpcStatus'
+      x-codegen-request-body-name: body
+components:
+  schemas:
+    GetTextCompletionStreamRequestHistoryMessage:
+      type: object
+      properties:
+        userPrompt:
+          title: 'the user message: stringified tokens'
+          description: 'the user message: stringified tokens'
+          type: string
+        assistantResponse:
+          title: 'the assistant message: stringified tokens'
+          type: string
+    protobufAny:
+      type: object
+      properties:
+        '@type':
+          type: string
+      additionalProperties:
+        type: object
+    rpcStatus:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/protobufAny'
+    v1GetTextCompletionStreamRequest:
+      type: object
+      required:
+        - modelId
+        - userPrompt
+      properties:
+        modelId:
+          title: the UID of the model to run this request against
+          type: string 
+        systemPrompt:
+          title: the prompt that the system will use to define its response behavior
+          type: string
+          # default: ""
+        history:
+          title: All of the messages in this chat so far
+          type: array
+          # default: []
+          items:
+            $ref: '#/components/schemas/GetTextCompletionStreamRequestHistoryMessage'
+        userPrompt:
+          title: the prompt provided by the user
+          type: string
+        seed:
+          title: |-
+            the seed to use when generating tokens
+            Randomization seed for the RNG when doing distribution sampling
+          type: integer
+          format: int64
+          default: 99
+        maxTokens:
+          title: the maximum amount of tokens to generate before terminating
+          type: integer
+          format: int64
+          default: 2048
+        temperature:
+          title: |-
+            controls the randomness of the response
+            Lower temperature is lower randomness
+            range(0,1)
+          type: number
+          format: float
+          default: 0.7
+        topP:
+          title: |-
+            controls the top percentile of tokens that are eligible to be sampled
+            range[0,)
+          type: number
+          format: float
+          default: 0.1
+        topK:
+          title: controls the top k most likely tokens that are eligible to be sampled
+          type: integer
+          format: int64
+          default: 200
+    v1GetTextCompletionStreamResponse:
+      type: object
+      properties:
+        requestId:
+          title: |-
+            the ID of the request. If request_id was sepcified in the request, this is the same ID.
+            It will only be included in the first response
+          type: string
+        content:
+          title: the newly generated token data
+          type: string
+        stats:
+          $ref: '#/components/schemas/v1PerformanceStats'
+    v1PerformanceStats:
+      type: object
+      properties:
+        timeGenerated:
+          title: the total generation time to this point in the stream. In seconds
+          type: number
+          format: float
+        tokensGenerated:
+          title: total number of tokens generated to this point in the stream
+          type: integer
+          format: int64
+        timeProcessed:
+          title: the processing time to generate the first token. In seconds
+          type: number
+          format: float
+        tokensProcessed:
+          title: total number of tokens processed as input for this stream
+          type: integer
+          format: int64
