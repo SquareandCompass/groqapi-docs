@@ -1,8 +1,13 @@
+---
+description: The following are error messages that you may run into and their meanings.
+---
 
-# Errors
+# Error Messages
 
 ## Maintenance Mode
+
 If the service is in maintenance mode, the service will return the following:
+
 ```json
 {
   "error": {
@@ -15,6 +20,7 @@ If the service is in maintenance mode, the service will return the following:
 ## Queue is Full
 
 If the queue is full, the API will return a `HTTP/503` and the following:
+
 ```json
 {
   "error": {
@@ -28,6 +34,7 @@ If the queue is full, the API will return a `HTTP/503` and the following:
 ## Get Place In Queue Fails
 
 If you try to get place in queue, but the request is no longer available, the API will return a `HTTP/404` and the following:
+
 ```json
 {
   "error": {

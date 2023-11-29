@@ -1,8 +1,8 @@
 # Table of contents
 
-* [Welcome to Groq](README.md)
-* [Getting Started](md/getting\_started.md)
-* [Authentication](md/authentication.md)
-* [APIs](apis/README.md)
-  * [OpenAI API](apis/openai.oas.md)
-* [Errors](md/errors.md)
+* [Groq API](README.md)
+  * [Getting Started](readme/getting\_started.md)
+  * [Authentication](readme/authentication.md)
+  * [APIs](readme/apis/README.md)
+    * [OpenAI API](readme/apis/openai.oas.md)
+  * [Error Messages](readme/errors.md)

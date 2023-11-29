@@ -1,6 +1,6 @@
-# Welcome to Groq
+# Groq API
 
-Groq is an AI solutions company delivering ultra-low latency inference with the first ever Language Processing Unit™ accelerator. Groq API enables developers to integrate state-of-the-art LLMs such as Llama-2 into low latency applications. Learn more at [groq.com](https://groq.com).
+Groq API enables developers to integrate state-of-the-art LLMs such as Llama-2 into low latency applications. Learn more at [groq.com](https://groq.com).
 
 ## Quickstart
 

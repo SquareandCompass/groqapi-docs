@@ -1,9 +1,8 @@
 # Authentication
 
-## API Auth
-To authenticate with the API, use your provided auth token to generate a short-lived (1hr) token like so:
+## API Authentication
 
-<!-- checked -->
+To authenticate with the API, use your provided auth token to generate a short-lived (1hr) token like so:
 
 ```bash
 # Export provided keys
@@ -14,6 +13,7 @@ GROQ_DEFAULT_REGION="us-west-1"
 # Retrieve token
 TOKEN=$(curl -sH"Authorization: Bearer ${GROQ_SECRET_ACCESS_KEY}" https://api.groq.com/v1/auth/get_token | jq -r ".access_token")
 ```
+
 You can now use this token as a Bearer Token in any of our APIs, like so
 
 ```bash
@@ -23,11 +23,13 @@ curl -s -H"Authorization: Bearer ${TOKEN}" https://api.groq.com/v1/model_manager
 ## JWT Decode
 
 If you would like to decode the JWT returned via `get_token`, you can use the following one-liner:
+
 ```bash
 jq -R 'split(".") |.[0:2] | map(@base64d) | map(fromjson)' <<< $TOKEN
 ```
 
 Output:
+
 ```json
 [
   {
@@ -47,4 +49,5 @@ Output:
   }
 ]
 ```
+
 You can use this to find the expiration timestamp.
