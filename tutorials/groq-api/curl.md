@@ -1,22 +1,10 @@
-# Groq API
+# curl
 
-Groq is an AI solutions company delivering ultra-low latency inference with the first ever Language Processing Unit™ accelerator. Groq API enables developers to integrate state-of-the-art LLMs such as Llama-2 into low latency applications. Learn more at [groq.com](https://groq.com).
+Before you begin, ensure that you have a valid authentication token. See our Authentication page for more info.
 
-## Quickstart
-
-To generate an inference With Groq API, you must first generate a short-lived (1hr) authentication token like so:
-
-{% code overflow="wrap" %}
-```bash
-# Export provided keys
-GROQ_ACCESS_KEY_ID="<organization id field>"
-GROQ_SECRET_ACCESS_KEY="<key provided>"
-GROQ_DEFAULT_REGION="us-west-1"
-
-# Retrieve token
-TOKEN=$(curl -sH"Authorization: Bearer ${GROQ_SECRET_ACCESS_KEY}" https://api.groq.com/v1/auth/get_token | jq -r ".access_token")
-```
-{% endcode %}
+{% hint style="info" %}
+Note, you need to be using at least `curl` v7.82.0 for these to work with `--json`, as well as `jq`. For use with older `curl` versions look [here](https://everything.curl.dev/http/post/json)
+{% endhint %}
 
 Once you have done so, you can use the token to access the API:
 

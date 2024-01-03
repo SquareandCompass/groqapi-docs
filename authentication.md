@@ -4,6 +4,7 @@
 
 To authenticate with the API, use your provided auth token to generate a short-lived (1hr) token like so:
 
+{% code overflow="wrap" %}
 ```bash
 # Export provided keys
 GROQ_ACCESS_KEY_ID="<organization id field>"
@@ -13,12 +14,15 @@ GROQ_DEFAULT_REGION="us-west-1"
 # Retrieve token
 TOKEN=$(curl -sH"Authorization: Bearer ${GROQ_SECRET_ACCESS_KEY}" https://api.groq.com/v1/auth/get_token | jq -r ".access_token")
 ```
+{% endcode %}
 
 You can now use this token as a Bearer Token in any of our APIs, like so
 
+{% code overflow="wrap" %}
 ```bash
 curl -s -H"Authorization: Bearer ${TOKEN}" https://api.groq.com/v1/model_manager/models | jq
 ```
+{% endcode %}
 
 ## JWT Decode
 

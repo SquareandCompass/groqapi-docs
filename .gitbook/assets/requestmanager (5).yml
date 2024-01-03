@@ -1,0 +1,208 @@
+swagger: "2.0"
+# openapi: 3.1.0
+info:
+  title: Groq API
+  version: v0.0.1
+  # x-logo:
+  #   url: https://groq.com/wp-content/uploads/2021/04/groq_logo.svg
+# servers:
+host: api.groq.com
+tags:
+  - name: RequestManagerService
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /v1/request_manager/text_completion:
+    post:
+      summary: |-
+        completes text based on query and get back a stream of tokens
+      operationId: RequestManagerService_GetTextCompletionStream
+      responses:
+        '200':
+          description: A successful response.(streaming responses)
+          schema:
+            type: object
+            properties:
+              result:
+                $ref: '#/definitions/v1GetTextCompletionStreamResponse'
+              error:
+                $ref: '#/definitions/rpcStatus'
+            title: Stream result of v1GetTextCompletionStreamResponse
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/v1GetTextCompletionRequest'
+      tags:
+        - RequestManagerService
+  /v1/request_manager/text_completion_full:
+    post:
+      summary: |-
+        completes text based on query and get back a message with the full response
+      operationId: RequestManagerService_GetTextCompletion
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1GetTextCompletionResponse'
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/v1GetTextCompletionRequest'
+      tags:
+        - RequestManagerService
+definitions:
+  GetTextCompletionRequestHistoryMessage:
+    type: object
+    properties:
+      userPrompt:
+        type: string
+        title: 'the user message: stringified tokens'
+      assistantResponse:
+        type: string
+        title: 'the assistant message: stringified tokens'
+  protobufAny:
+    type: object
+    properties:
+      '@type':
+        type: string
+    additionalProperties: {}
+  rpcStatus:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+      details:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/protobufAny'
+  v1GetTextCompletionRequest:
+    type: object
+    properties:
+      modelId:
+        type: string
+        title: the UID of the model to run this request against
+      systemPrompt:
+        type: string
+        title: the prompt that the system will use to define its response behavior
+      history:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/GetTextCompletionRequestHistoryMessage'
+        title: All of the messages in this chat so far
+      userPrompt:
+        type: string
+        title: the prompt provided by the user
+      seed:
+        type: integer
+        format: int64
+        title: |-
+          the seed to use when generating tokens
+          Randomization seed for the RNG when doing distribution sampling
+      maxTokens:
+        type: integer
+        format: int64
+        title: the maximum amount of tokens to generate before terminating
+      temperature:
+        type: number
+        format: float
+        title: |-
+          controls the randomness of the response
+          Lower temperature is lower randomness
+          range(0,2]
+      topP:
+        type: number
+        format: float
+        title: |-
+          controls the top percentile of tokens that are eligible to be sampled
+          range[0,1]
+      topK:
+        type: integer
+        format: int64
+        title: controls the top k most likely tokens that are eligible to be sampled
+      frequencyPenalty:
+        type: number
+        format: float
+        title: https://platform.openai.com/docs/api-reference/chat/create#chat-create-frequency_penalty
+      logitBias:
+        type: object
+        additionalProperties:
+          type: integer
+          format: int32
+        title: https://platform.openai.com/docs/api-reference/chat/create#chat-create-logit_bias
+      'n':
+        type: integer
+        format: int64
+        title: https://platform.openai.com/docs/api-reference/chat/create#chat-create-n
+      presencePenalty:
+        type: number
+        format: float
+        title: https://platform.openai.com/docs/api-reference/chat/create#chat-create-presence_penalty
+      stop:
+        type: array
+        items:
+          type: string
+        title: https://platform.openai.com/docs/api-reference/chat/create#chat-create-stop
+      maxInputTokens:
+        type: integer
+        format: int64
+        title: The number of tokens to include in the input. Default = model sequence_length * (2/3)
+  v1GetTextCompletionResponse:
+    type: object
+    properties:
+      requestId:
+        type: string
+      content:
+        type: string
+        title: the full response
+      stats:
+        $ref: '#/definitions/v1PerformanceStats'
+  v1GetTextCompletionStreamResponse:
+    type: object
+    properties:
+      requestId:
+        type: string
+        title: request_id will only be included in the first response
+      content:
+        type: string
+        title: the newly generated token data
+      stats:
+        $ref: '#/definitions/v1PerformanceStats'
+  v1PerformanceStats:
+    type: object
+    properties:
+      timeGenerated:
+        type: number
+        format: double
+        title: the total generation time to this point in the stream. In seconds
+      tokensGenerated:
+        type: integer
+        format: int64
+        title: total number of tokens generated to this point in the stream
+      timeProcessed:
+        type: number
+        format: double
+        title: the processing time to generate the first token. In seconds
+      tokensProcessed:
+        type: integer
+        format: int64
+        title: total number of tokens processed as input for this stream
+
