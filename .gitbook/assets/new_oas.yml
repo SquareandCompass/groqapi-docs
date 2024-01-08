@@ -1,0 +1,211 @@
+# Generated with protoc-gen-openapi
+# https://github.com/google/gnostic/tree/master/cmd/protoc-gen-openapi
+
+openapi: 3.0.3
+info:
+    title: RequestManagerService API
+    version: 0.0.1
+paths:
+    /v1/request_manager/text_completion:
+        post:
+            tags:
+                - RequestManagerService
+            description: |-
+                completes text based on query and get back a stream of tokens
+                 buf:lint:ignore RPC_REQUEST_STANDARD_NAME
+                 buf:lint:ignore RPC_REQUEST_RESPONSE_UNIQUE
+            operationId: RequestManagerService_GetTextCompletionStream
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/GetTextCompletionRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetTextCompletionStreamResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /v1/request_manager/text_completion_full:
+        post:
+            tags:
+                - RequestManagerService
+            description: |-
+                completes text based on query and get back a message with the full response
+                 buf:lint:ignore RPC_REQUEST_RESPONSE_UNIQUE
+            operationId: RequestManagerService_GetTextCompletion
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/GetTextCompletionRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetTextCompletionResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+components:
+    schemas:
+        GetTextCompletionRequest:
+            type: object
+            properties:
+                modelId:
+                    type: string
+                    description: the UID of the model to run this request against
+                systemPrompt:
+                    type: string
+                    description: the prompt that the system will use to define its response behavior
+                history:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/GetTextCompletionRequest_HistoryMessage'
+                    description: All of the messages in this chat so far
+                userPrompt:
+                    type: string
+                    description: the prompt provided by the user
+                seed:
+                    type: integer
+                    description: |-
+                        the seed to use when generating tokens
+                         Randomization seed for the RNG when doing distribution sampling
+                    format: uint32
+                maxTokens:
+                    type: integer
+                    description: the maximum amount of tokens to generate before terminating
+                    format: uint32
+                temperature:
+                    type: number
+                    description: |-
+                        controls the randomness of the response
+                         Lower temperature is lower randomness
+                         range(0,2]
+                    format: float
+                topP:
+                    type: number
+                    description: |-
+                        controls the top percentile of tokens that are eligible to be sampled
+                         range[0,1]
+                    format: float
+                topK:
+                    type: integer
+                    description: controls the top k most likely tokens that are eligible to be sampled
+                    format: uint32
+                frequencyPenalty:
+                    type: number
+                    description: https://platform.openai.com/docs/api-reference/chat/create#chat-create-frequency_penalty
+                    format: float
+                logitBias:
+                    type: object
+                    additionalProperties:
+                        type: integer
+                        format: int32
+                    description: https://platform.openai.com/docs/api-reference/chat/create#chat-create-logit_bias
+                n:
+                    type: integer
+                    description: https://platform.openai.com/docs/api-reference/chat/create#chat-create-n
+                    format: uint32
+                presencePenalty:
+                    type: number
+                    description: https://platform.openai.com/docs/api-reference/chat/create#chat-create-presence_penalty
+                    format: float
+                stop:
+                    type: array
+                    items:
+                        type: string
+                    description: https://platform.openai.com/docs/api-reference/chat/create#chat-create-stop
+                maxInputTokens:
+                    type: integer
+                    description: The number of tokens to include in the input. Default = model sequence_length * (2/3)
+                    format: uint32
+        GetTextCompletionRequest_HistoryMessage:
+            type: object
+            properties:
+                userPrompt:
+                    type: string
+                    description: 'the user message: stringified tokens'
+                assistantResponse:
+                    type: string
+                    description: 'the assistant message: stringified tokens'
+        GetTextCompletionResponse:
+            type: object
+            properties:
+                requestId:
+                    type: string
+                content:
+                    type: string
+                    description: the full response
+                stats:
+                    $ref: '#/components/schemas/PerformanceStats'
+        GetTextCompletionStreamResponse:
+            type: object
+            properties:
+                requestId:
+                    type: string
+                    description: request_id will only be included in the first response
+                content:
+                    type: string
+                    description: the newly generated token data
+                stats:
+                    $ref: '#/components/schemas/PerformanceStats'
+        GoogleProtobufAny:
+            type: object
+            properties:
+                '@type':
+                    type: string
+                    description: The type of the serialized message.
+            additionalProperties: true
+            description: Contains an arbitrary serialized message along with a @type that describes the type of the serialized message.
+        PerformanceStats:
+            type: object
+            properties:
+                timeGenerated:
+                    type: number
+                    description: the total generation time to this point in the stream. In seconds
+                    format: double
+                tokensGenerated:
+                    type: integer
+                    description: total number of tokens generated to this point in the stream
+                    format: uint32
+                timeProcessed:
+                    type: number
+                    description: the processing time to generate the first token. In seconds
+                    format: double
+                tokensProcessed:
+                    type: integer
+                    description: total number of tokens processed as input for this stream
+                    format: uint32
+        Status:
+            type: object
+            properties:
+                code:
+                    type: integer
+                    description: The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code].
+                    format: int32
+                message:
+                    type: string
+                    description: A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
+                details:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/GoogleProtobufAny'
+                    description: A list of messages that carry the error details.  There is a common set of message types for APIs to use.
+            description: 'The `Status` type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by [gRPC](https://github.com/grpc). Each `Status` message contains three pieces of data: error code, error message, and error details. You can find out more about this error model and how to work with it in the [API Design Guide](https://cloud.google.com/apis/design/errors).'
+tags:
+    - name: RequestManagerService

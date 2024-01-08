@@ -9,20 +9,22 @@ Note, you need to be using at least `curl` v7.82.0 for these to work with `--jso
 Once you have done so, you can use the token to access the API:
 
 {% tabs %}
-{% tab title="Generate Code-Llama Inference" %}
-{% code overflow="wrap" %}
-```bash
-curl -sq --keepalive-time 60 -H"Authorization: Bearer ${TOKEN}" --json '{"model_id": "codellama-34b", "system_prompt": "You are helpful and concise coding assitant", "user_prompt": "Write a beautiful blogging website in html/css"}' https://api.groq.com/v1/request_manager/text_completion | jq
-```
-{% endcode %}
-{% endtab %}
-
 {% tab title="Generate Llama2 Inference" %}
 {% code overflow="wrap" %}
 ```bash
 curl -s -H"Authorization: Bearer ${TOKEN}" --json '{"model_id": "llama2-70b-4096", "system_prompt": "You are an unhelpful assistant", "user_prompt": "Are you a fish?"}' https://api.groq.com/v1/request_manager/text_completion | jq
 ```
 {% endcode %}
+{% endtab %}
+
+{% tab title="Generate Code-Llama Inference" %}
+{% code overflow="wrap" %}
+```bash
+curl -sq --keepalive-time 60 -H"Authorization: Bearer ${TOKEN}" --json '{"model_id": "codellama-34b", "system_prompt": "You are helpful and concise coding assitant", "user_prompt": "Write a beautiful blogging website in html/css"}' https://api.groq.com/v1/request_manager/text_completion | jq
+```
+{% endcode %}
+
+Note Code-Llama is only available to select users at this time. If you are interested in testing Code-Llama, email us at [api@groq.com](mailto:api@groq.com).
 {% endtab %}
 
 {% tab title="List Models" %}
