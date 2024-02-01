@@ -1,6 +1,6 @@
 # Table of contents
 
-* [Groq API](README.md)
+* [Welcome to Groq](README.md)
 * [Getting Started](getting\_started.md)
 * [Authentication](authentication.md)
 * [Error Messages](errors.md)
